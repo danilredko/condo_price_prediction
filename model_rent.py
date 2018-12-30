@@ -5,9 +5,8 @@ import re
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
-from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
 from sklearn import ensemble
@@ -22,13 +21,12 @@ from numpy import genfromtxt
 import matplotlib.pyplot as plt
 
 
-df= pd.read_csv('condos.csv', sep='!', names=['street_no', 'street', 'unit', 'price', 'sqft', 'beds', 'baths', 'parking', 'locker'], false_values=['No'], true_values=['Yes'])
+df= pd.read_csv('condos_rent.csv', sep='!', names=['street_no', 'street', 'unit', 'price', 'sqft', 'beds', 'baths', 'parking', 'locker'], false_values=['No'], true_values=['Yes'])
 
 
-print(df.head())
+
 df['den'] = np.zeros(len(df['beds']))
 
-df['floor'] = np.zeros(len(df['beds']))
 
 
 #Conver all sqft intervals to one number
@@ -39,39 +37,20 @@ def sqft_average(sqft):
 
         return 0
 
-    elif '-' in sqft:
+    first_number, second_number = re.findall('\d+', sqft)
 
-        first_number, second_number = re.findall('\d+', sqft)
-        return (int(first_number)+int(second_number))/2
-
-    else:
-
-        return int(sqft)
-
-
-def get_floor(unit):
-
-    if len(unit)==4:
-        return int(unit[0:2])
-    elif len(unit)==3 or len(unit)==1:
-        return int(unit[0])
-
-
+    return (int(first_number)+int(second_number))/2
 
 
 df = df[df['beds']!='UNKNOWN']
 df = df[df['sqft']!=0]
-#df = df[df['price']>100000]
+df = df[df['price']>1000]
 
 
-df = df[df['unit'].str.isdecimal()]
-#print(df.loc[(df['beds']=='Studio&1')][:10])
+
+print(df.loc[(df['beds']=='Studio&1')][:10])
 
 df['sqft'] = df['sqft'].map(sqft_average)
-df['floor'] = df['unit'].map(get_floor)
-
-print(df.head())
-
 
 #print(df.loc[df['beds']=='Studio'][:5])
 
@@ -88,6 +67,9 @@ df['beds'] = df['beds'].apply(int)
 t = df['price']
 t = np.array(t)
 
+df['parking'] = np.where(df['parking']==True, 1, 0)
+df['locker'] = np.where(df['locker']==True, 1, 0)
+
 
 correlation_matrix = df.corr().round(2)
 # annot = True to print the values inside the square
@@ -96,35 +78,22 @@ plt.show()
 
 df.drop(['street_no', 'street', 'unit'], axis=1, inplace=True)
 
-
 features = ['sqft']
 target=df['price']
 
-X = pd.DataFrame(df['sqft'], columns='sqft')
+X = pd.DataFrame(df['sqft'], columns = ['sqft'])
 Y = df['price']
 
 
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, shuffle=True, random_state=60)
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.30, shuffle=True)
-
-
+print(X_train.loc[0])
 lin_model = LinearRegression()
 
 lin_model.fit(X_train, Y_train)
 
-predictions = lin_model.predict(X_test)
-
-plt.scatter(X_train, Y_train)
-plt.plot(X_test, predictions, color='blue')
-plt.show()
-
 print(lin_model.score(X_test, Y_test))
 
+predictions = lin_model.predict(np.array([560]).reshape(1, -1))
 
-regressor = RandomForestRegressor(n_estimators=300, random_state=0)
-regressor.fit(X_train, Y_train)
-
-# Score model
-print(regressor.score(X_test, Y_test))
-
-print(regressor.predict(np.array([1000]).reshape(1,-1)))
+print(predictions)
