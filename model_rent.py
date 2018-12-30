@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
+from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPClassifier
 from sklearn import ensemble
@@ -74,26 +76,31 @@ df['locker'] = np.where(df['locker']==True, 1, 0)
 correlation_matrix = df.corr().round(2)
 # annot = True to print the values inside the square
 sns.heatmap(data=correlation_matrix, annot=True)
-plt.show()
+#plt.show()
 
 df.drop(['street_no', 'street', 'unit'], axis=1, inplace=True)
 
 features = ['sqft']
 target=df['price']
-
-X = pd.DataFrame(df['sqft'], columns = ['sqft'])
+print(df['baths'].values[:3])
+X = np.concatenate((df['sqft'].values.reshape(2134,1), df['beds'].values.reshape(2134,1), df['baths'].values.reshape(2134,1)), axis=1).reshape(2134,3)
+print(X)
 Y = df['price']
 
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, shuffle=True, random_state=60)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.30, shuffle=True)
 
-print(X_train.loc[0])
-lin_model = LinearRegression()
 
-lin_model.fit(X_train, Y_train)
+lin = LinearRegression()
 
-print(lin_model.score(X_test, Y_test))
+lin.fit(X_train, Y_train)
+print(lin.score(X_test, Y_test))
 
-predictions = lin_model.predict(np.array([560]).reshape(1, -1))
 
-print(predictions)
+regressor = RandomForestRegressor(n_estimators=14, random_state=0)
+regressor.fit(X_train, Y_train)
+
+# Score model
+print(regressor.score(X_test, Y_test))
+
+print(regressor.predict(np.array([500, 1, 3]).reshape(1,-1)))

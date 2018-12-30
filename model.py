@@ -100,26 +100,25 @@ df.drop(['street_no', 'street', 'unit'], axis=1, inplace=True)
 features = ['sqft']
 target=df['price']
 
-X = pd.DataFrame(df['sqft'], columns='sqft')
+#X = pd.DataFrame(df['sqft'], columns=['sqft'])
+X = np.concatenate((df['sqft'].values.reshape(1350,1), df['beds'].values.reshape(1350,1), df['baths'].values.reshape(1350,1)), axis=1).reshape(1350,3)
 Y = df['price']
 
 
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.30, shuffle=True)
 
-
 lin_model = LinearRegression()
 
 lin_model.fit(X_train, Y_train)
-
+'''
 predictions = lin_model.predict(X_test)
 
 plt.scatter(X_train, Y_train)
 plt.plot(X_test, predictions, color='blue')
 plt.show()
-
+'''
 print(lin_model.score(X_test, Y_test))
-
 
 regressor = RandomForestRegressor(n_estimators=300, random_state=0)
 regressor.fit(X_train, Y_train)
@@ -127,4 +126,4 @@ regressor.fit(X_train, Y_train)
 # Score model
 print(regressor.score(X_test, Y_test))
 
-print(regressor.predict(np.array([1000]).reshape(1,-1)))
+#print(regressor.predict(np.array([1000]).reshape(1,-1)))
